@@ -8,43 +8,50 @@
       width: 200px;
       margin-bottom: 20px;
     }
+
+    .input-field {
+      width: 50px;
+      margin-left: 10px;
+    }
   </style>
 </head>
 
 <body>
   <h1>Range Slider App</h1>
+
   <div class="slider">
     <label for="cadence-slider">步頻 (Cadence):</label>
     <input type="range" id="cadence-slider" min="140" max="230" step="1" value="140">
+    <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="140">
     <span id="cadence-value"></span> steps/min
   </div>
+
   <div class="slider">
     <label for="stride-slider">步幅 (Stride):</label>
     <input type="range" id="stride-slider" min="0.1" max="2.0" step="0.01" value="0.1">
+    <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.1">
     <span id="stride-value"></span> m
   </div>
+
   <div class="slider">
     <label for="pace-slider">配速 (Pace):</label>
     <input type="range" id="pace-slider" min="1" max="10" step="0.001" value="10">
+    <input type="number" id="pace-input" class="input-field" min="1" max="10" step="0.001" value="10">
     <span id="pace-value"></span> min/km
   </div>
+
   <script>
     // Function to calculate pace
     function calculatePace(cadence, stride) {
-      // Calculate total distance covered per minute (in meters)
       const distancePerMinute = cadence * stride;
-      // Calculate pace (minutes per kilometer) by dividing 1000 meters by distance per minute
       const pace = 1000 / distancePerMinute;
       return pace;
     }
 
     // Function to calculate step frequency from pace and step length
     function calculateCadence(pace, stride) {
-      // Convert pace (minutes per kilometer) into speed (kilometers per minute)
       const speedKmPerMinute = 1 / pace;
-      // Calculate total distance per minute (in meters)
       const distancePerMinute = speedKmPerMinute * 1000;
-      // Calculate step frequency (steps per minute)
       const stepFrequency = distancePerMinute / stride;
       return stepFrequency;
     }
@@ -57,38 +64,74 @@
     }
 
     const cadenceSlider = document.getElementById('cadence-slider');
+    const cadenceInput = document.getElementById('cadence-input');
     const cadenceValue = document.getElementById('cadence-value');
+
     const strideSlider = document.getElementById('stride-slider');
+    const strideInput = document.getElementById('stride-input');
     const strideValue = document.getElementById('stride-value');
+
     const paceSlider = document.getElementById('pace-slider');
+    const paceInput = document.getElementById('pace-input');
     const paceValue = document.getElementById('pace-value');
 
-    cadenceSlider.addEventListener('input', () => {
+    // Update UI when slider or input is adjusted
+    function updatePaceAndCadence() {
       const cadence = parseFloat(cadenceSlider.value);
       const stride = parseFloat(strideSlider.value);
       const pace = calculatePace(cadence, stride);
+
       paceSlider.value = pace.toFixed(3);
+      paceInput.value = pace.toFixed(3);
       paceValue.textContent = formatPace(pace);
       cadenceValue.textContent = cadence;
-    });
-
-    strideSlider.addEventListener('input', () => {
-      const stride = parseFloat(strideSlider.value);
-      const cadence = parseFloat(cadenceSlider.value);
-      const pace = calculatePace(cadence, stride);
-      paceSlider.value = pace.toFixed(3);
-      paceValue.textContent = formatPace(pace);
       strideValue.textContent = stride.toFixed(2);
-    });
+    }
 
-    paceSlider.addEventListener('input', () => {
+    function updateCadenceFromPace() {
       const pace = parseFloat(paceSlider.value);
       const stride = parseFloat(strideSlider.value);
       const cadence = Math.ceil(calculateCadence(pace, stride));
+
       cadenceSlider.value = cadence.toFixed(0);
+      cadenceInput.value = cadence.toFixed(0);
       cadenceValue.textContent = cadence.toFixed(0);
       paceValue.textContent = formatPace(pace);
+    }
+
+    // Sync slider with input field and update values
+    cadenceSlider.addEventListener('input', () => {
+      cadenceInput.value = cadenceSlider.value;
+      updatePaceAndCadence();
     });
+
+    cadenceInput.addEventListener('input', () => {
+      cadenceSlider.value = cadenceInput.value;
+      updatePaceAndCadence();
+    });
+
+    strideSlider.addEventListener('input', () => {
+      strideInput.value = strideSlider.value;
+      updatePaceAndCadence();
+    });
+
+    strideInput.addEventListener('input', () => {
+      strideSlider.value = strideInput.value;
+      updatePaceAndCadence();
+    });
+
+    paceSlider.addEventListener('input', () => {
+      paceInput.value = paceSlider.value;
+      updateCadenceFromPace();
+    });
+
+    paceInput.addEventListener('input', () => {
+      paceSlider.value = paceInput.value;
+      updateCadenceFromPace();
+    });
+
+    // Initial update to set values
+    updatePaceAndCadence();
   </script>
 </body>
 
