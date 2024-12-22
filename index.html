@@ -2,51 +2,54 @@
 <html>
 
 <head>
-  <title>Range Slider App</title>
-  <style>
-    .slider {
-      width: 100%;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
 
-    .slider label {
-      min-width: 120px;
-    }
+  <head>
+    <title>Cadence/Stride/Pace</title>
+    <style>
+      .slider {
+        width: 110%;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .slider input[type="range"] {
-      width: 200px;
-    }
+      .slider label {
+        min-width: 120px;
+      }
 
-    .input-field {
-      width: 60px;
-    }
-  </style>
-</head>
+      .slider input[type="range"] {
+        width: 200px;
+      }
+
+      .input-field {
+        width: 60px;
+      }
+    </style>
+  </head>
 
 <body>
-  <h1>Range Slider App</h1>
+  <h1>Cadence/Stride/Pace</h1>
 
   <div class="slider">
     <label for="cadence-slider">步頻 (Cadence):</label>
-    <input type="range" id="cadence-slider" min="140" max="230" step="1" value="140">
-    <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="140">
+    <input type="range" id="cadence-slider" min="140" max="230" step="1" value="180">
+    <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="180">
     <span id="cadence-value"></span> steps/min
   </div>
 
   <div class="slider">
     <label for="stride-slider">步幅 (Stride):</label>
-    <input type="range" id="stride-slider" min="0.1" max="2.0" step="0.01" value="0.1">
-    <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.1">
+    <input type="range" id="stride-slider" min="0.1" max="2.0" step="0.01" value="0.9">
+    <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.9">
     <span id="stride-value"></span> m
   </div>
 
   <div class="slider">
     <label for="pace-slider">配速 (Pace):</label>
     <input type="range" id="pace-slider" min="1" max="10" step="0.001" value="10">
-    <input type="number" id="pace-input" class="input-field" min="1" max="10" step="0.001" value="10">
+    <input type="number" id="pace-input-minutes" class="input-field" min="1" max="10" step="1" value="5"> min
+    <input type="number" id="pace-input-seconds" class="input-field" min="0" max="60" step="1" value="0"> sec
     <span id="pace-value"></span> min/km
   </div>
 
@@ -70,7 +73,21 @@
     function formatPace(pace) {
       const minutes = Math.floor(pace);
       const seconds = Math.round((pace - minutes) * 60);
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      return {
+        minutes: minutes.toString().padStart(2, '0'),
+        seconds: seconds.toString().padStart(2, '0')
+      };
+    }
+
+    function updatePace() {
+      const cadence = parseFloat(cadenceSlider.value);
+      const stride = parseFloat(strideSlider.value);
+      const pace = calculatePace(cadence, stride);
+
+      paceSlider.value = pace.toFixed(3);
+      const formatPaceString = formatPace(pace);
+      paceInputMinutes.value = formatPaceString.minutes;
+      paceInputSeconds.value = formatPaceString.seconds;
     }
 
     const cadenceSlider = document.getElementById('cadence-slider');
@@ -82,66 +99,77 @@
     const strideValue = document.getElementById('stride-value');
 
     const paceSlider = document.getElementById('pace-slider');
-    const paceInput = document.getElementById('pace-input');
+    const paceInputMinutes = document.getElementById('pace-input-minutes');
+    const paceInputSeconds = document.getElementById('pace-input-seconds');
     const paceValue = document.getElementById('pace-value');
 
-    // Update UI when slider or input is adjusted
-    function updatePaceAndCadence() {
-      const cadence = parseFloat(cadenceSlider.value);
-      const stride = parseFloat(strideSlider.value);
-      const pace = calculatePace(cadence, stride);
-
-      paceSlider.value = pace.toFixed(3);
-      paceInput.value = pace.toFixed(3);
-      paceValue.textContent = formatPace(pace);
-      cadenceValue.textContent = cadence;
-      strideValue.textContent = stride.toFixed(2);
-    }
-
-    function updateCadenceFromPace() {
-      const pace = parseFloat(paceSlider.value);
-      const stride = parseFloat(strideSlider.value);
-      const cadence = Math.ceil(calculateCadence(pace, stride));
-
-      cadenceSlider.value = cadence.toFixed(0);
-      cadenceInput.value = cadence.toFixed(0);
-      cadenceValue.textContent = cadence.toFixed(0);
-      paceValue.textContent = formatPace(pace);
-    }
-
-    // Sync slider with input field and update values
     cadenceSlider.addEventListener('input', () => {
       cadenceInput.value = cadenceSlider.value;
-      updatePaceAndCadence();
+      updatePace();
     });
 
     cadenceInput.addEventListener('input', () => {
       cadenceSlider.value = cadenceInput.value;
-      updatePaceAndCadence();
+      updatePace();
     });
 
     strideSlider.addEventListener('input', () => {
-      strideInput.value = strideSlider.value;
-      updatePaceAndCadence();
+      strideInput.value = parseFloat(strideSlider.value).toFixed(2);
+      updatePace();
     });
 
     strideInput.addEventListener('input', () => {
       strideSlider.value = strideInput.value;
-      updatePaceAndCadence();
+      updatePace();
+    });
+
+    // Limit stride input to 2 decimal places
+    strideInput.addEventListener('blur', () => {
+      strideInput.value = parseFloat(strideInput.value).toFixed(2);
     });
 
     paceSlider.addEventListener('input', () => {
-      paceInput.value = paceSlider.value;
-      updateCadenceFromPace();
+      const pace = parseFloat(paceSlider.value);
+      const stride = parseFloat(strideSlider.value);
+      const cadence = Math.ceil(calculateCadence(pace, stride));
+
+      // Update cadence slider and input
+      cadenceSlider.value = cadence.toFixed(0);
+      cadenceInput.value = cadence.toFixed(0);
+
+      // Update pace input fields
+      const formatPaceString = formatPace(pace);
+      paceInputMinutes.value = formatPaceString.minutes;
+      paceInputSeconds.value = formatPaceString.seconds;
     });
 
-    paceInput.addEventListener('input', () => {
-      paceSlider.value = paceInput.value;
-      updateCadenceFromPace();
+    paceInputMinutes.addEventListener('input', () => {
+      const pace = parseFloat(paceInputMinutes.value) + parseFloat(paceInputSeconds.value) / 60;
+      paceSlider.value = pace;
+
+      const stride = parseFloat(strideSlider.value);
+      const cadence = Math.ceil(calculateCadence(pace, stride));
+
+      // Update cadence slider and input
+      cadenceSlider.value = cadence.toFixed(0);
+      cadenceInput.value = cadence.toFixed(0);
+    });
+
+    paceInputSeconds.addEventListener('input', () => {
+      const pace = parseFloat(paceInputMinutes.value) + parseFloat(paceInputSeconds.value) / 60;
+      paceSlider.value = pace;
+
+      const stride = parseFloat(strideSlider.value);
+      const cadence = Math.ceil(calculateCadence(pace, stride));
+
+      // Update cadence slider and input
+      cadenceSlider.value = cadence.toFixed(0);
+      cadenceInput.value = cadence.toFixed(0);
     });
 
     // Initial update to set values
-    updatePaceAndCadence();
+    updatePace();
+
   </script>
 </body>
 
