@@ -109,5 +109,81 @@ paceInputSeconds.addEventListener('input', () => {
     cadenceInput.value = cadence.toFixed(0);
 });
 
-// Initial update
-updatePace();
+document.addEventListener('DOMContentLoaded', () => {
+    // Load saved values
+    loadFromLocalStorage();
+
+    // Get all input elements
+    const cadenceSlider = document.getElementById('cadence-slider');
+    const cadenceInput = document.getElementById('cadence-input');
+    const strideSlider = document.getElementById('stride-slider');
+    const strideInput = document.getElementById('stride-input');
+    const paceSlider = document.getElementById('pace-slider');
+    const paceInputMinutes = document.getElementById('pace-input-minutes');
+    const paceInputSeconds = document.getElementById('pace-input-seconds');
+
+    // Add change event listeners
+    [cadenceSlider, cadenceInput].forEach(el => {
+        el.addEventListener('input', (e) => {
+            saveToLocalStorage('cadence', e.target.value);
+            // Save pace values after they're updated
+            setTimeout(() => {
+                saveToLocalStorage('paceMinutes', paceInputMinutes.value);
+                saveToLocalStorage('paceSeconds', paceInputSeconds.value);
+            }, 0);
+        });
+    });
+
+    [strideSlider, strideInput].forEach(el => {
+        el.addEventListener('input', (e) => {
+            saveToLocalStorage('stride', e.target.value);
+            // Save pace values after they're updated
+            setTimeout(() => {
+                saveToLocalStorage('paceMinutes', paceInputMinutes.value);
+                saveToLocalStorage('paceSeconds', paceInputSeconds.value);
+            }, 0);
+        });
+    });
+
+    [paceSlider, paceInputMinutes, paceInputSeconds].forEach(el => {
+        el.addEventListener('input', () => {
+            const minutes = parseFloat(paceInputMinutes.value) || 0;
+            const seconds = parseFloat(paceInputSeconds.value) || 0;
+            saveToLocalStorage('paceMinutes', minutes);
+            saveToLocalStorage('paceSeconds', seconds);
+            // Save cadence after it's updated
+            setTimeout(() => {
+                saveToLocalStorage('cadence', cadenceInput.value);
+            }, 0);
+        });
+    });
+});
+
+function saveToLocalStorage(key, value) {
+    localStorage.setItem(key, value);
+}
+
+function loadFromLocalStorage() {
+    // Load cadence
+    const savedCadence = localStorage.getItem('cadence') || 180;
+    document.getElementById('cadence-slider').value = savedCadence;
+    document.getElementById('cadence-input').value = savedCadence;
+
+    // Load stride
+    const savedStride = localStorage.getItem('stride') || 0.9;
+    document.getElementById('stride-slider').value = savedStride;
+    document.getElementById('stride-input').value = parseFloat(savedStride).toFixed(2);
+
+    // Load pace
+    const savedPaceMinutes = localStorage.getItem('paceMinutes') || 5;
+    const savedPaceSeconds = localStorage.getItem('paceSeconds') || 0;
+    document.getElementById('pace-input-minutes').value = savedPaceMinutes;
+    document.getElementById('pace-input-seconds').value = savedPaceSeconds;
+
+    // Calculate and set pace slider value
+    const totalPaceInMinutes = parseFloat(savedPaceMinutes) + (parseFloat(savedPaceSeconds) / 60);
+    document.getElementById('pace-slider').value = totalPaceInMinutes;
+
+    // Update all calculations
+    updatePace();
+}
