@@ -2,19 +2,16 @@
 const DOM = {
     cadence: {
         slider: document.getElementById('cadence-slider'),
-        input: document.getElementById('cadence-input'),
-        value: document.getElementById('cadence-value')
+        input: document.getElementById('cadence-input')
     },
     stride: {
         slider: document.getElementById('stride-slider'),
-        input: document.getElementById('stride-input'),
-        value: document.getElementById('stride-value')
+        input: document.getElementById('stride-input')
     },
     pace: {
         slider: document.getElementById('pace-slider'),
         minutes: document.getElementById('pace-input-minutes'),
-        seconds: document.getElementById('pace-input-seconds'),
-        value: document.getElementById('pace-value')
+        seconds: document.getElementById('pace-input-seconds')
     }
 };
 
