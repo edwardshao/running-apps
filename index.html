@@ -1,67 +1,116 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+  <title>Cadence/Stride/Pace</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+    }
 
-  <head>
-    <title>Cadence/Stride/Pace</title>
-    <style>
-      .slider {
-        width: 110%;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-      .slider label {
-        min-width: 120px;
-      }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-      .slider input[type="range"] {
-        width: 200px;
-      }
+    .slider {
+      width: 100%;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-      .input-field {
-        width: 60px;
-      }
-    </style>
-  </head>
+    .slider label {
+      min-width: 150px;
+      flex-shrink: 0;
+    }
 
+    .slider input[type="range"] {
+      width: 250px;
+      flex-shrink: 0;
+    }
+
+    .input-field {
+      width: 60px;
+      flex-shrink: 0;
+    }
+
+    .unit {
+      min-width: 50px;
+      flex-shrink: 0;
+    }
+
+    .description {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .decorative-line {
+      width: 100%;
+      height: 2px;
+      background-color: #ff6347;
+      margin: 20px 0;
+    }
+  </style>
+</head>
 <body>
-  <h1>Cadence/Stride/Pace</h1>
+  <div class="container">
+    <div class="header">
+      <h1>Cadence/Stride/Pace</h1>
+    </div>
 
-  <div class="slider">
-    <label for="cadence-slider">步頻 (Cadence):</label>
-    <input type="range" id="cadence-slider" min="140" max="230" step="1" value="180">
-    <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="180">
-    <span id="cadence-value"></span> steps/min
-  </div>
+    <div class="decorative-line"></div> <!-- Add decorative line -->
 
-  <div class="slider">
-    <label for="stride-slider">步幅 (Stride):</label>
-    <input type="range" id="stride-slider" min="0.1" max="2.0" step="0.01" value="0.9">
-    <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.9">
-    <span id="stride-value"></span> m
-  </div>
+    <div class="slider">
+      <label for="cadence-slider">步頻 (Cadence):</label>
+      <input type="range" id="cadence-slider" min="140" max="230" step="1" value="180">
+      <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="180">
+      <span class="unit">steps/min</span>
+    </div>
 
-  <div class="slider">
-    <label for="pace-slider">配速 (Pace):</label>
-    <input type="range" id="pace-slider" min="1" max="10" step="0.001" value="10">
-    <input type="number" id="pace-input-minutes" class="input-field" min="1" max="10" step="1" value="5"> min
-    <input type="number" id="pace-input-seconds" class="input-field" min="0" max="60" step="1" value="0"> sec
-    <span id="pace-value"></span> min/km
+    <div class="slider">
+      <label for="stride-slider">步幅 (Stride):</label>
+      <input type="range" id="stride-slider" min="0.1" max="2.0" step="0.01" value="0.9">
+      <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.9">
+      <span class="unit">m</span>
+    </div>
+
+    <div class="slider">
+      <label for="pace-slider">配速 (Pace):</label>
+      <input type="range" id="pace-slider" min="1" max="10" step="0.001" value="10">
+      <input type="number" id="pace-input-minutes" class="input-field" min="1" max="10" step="1" value="5">
+      <span class="unit">min</span>
+      <input type="number" id="pace-input-seconds" class="input-field" min="0" max="60" step="1" value="0">
+      <span class="unit">sec/km</span>
+    </div>
+
+    <div class="description">
+      <p>調整滑桿來設置你的步頻、步幅和配速，並查看相應的結果</p>
+    </div>
+
+    <div class="decorative-line"></div> <!-- Add decorative line -->
   </div>
 
   <script>
-    // Function to calculate pace
+    // Function to calculate pace from cadence and stride length
     function calculatePace(cadence, stride) {
       const distancePerMinute = cadence * stride;
       const pace = 1000 / distancePerMinute;
       return pace;
     }
 
-    // Function to calculate step frequency from pace and step length
+    // Function to calculate step frequency from pace and stride length
     function calculateCadence(pace, stride) {
       const speedKmPerMinute = 1 / pace;
       const distancePerMinute = speedKmPerMinute * 1000;
@@ -69,7 +118,7 @@
       return stepFrequency;
     }
 
-    // Function to format pace
+    // Function to format pace into minutes and seconds
     function formatPace(pace) {
       const minutes = Math.floor(pace);
       const seconds = Math.round((pace - minutes) * 60);
@@ -133,7 +182,7 @@
       const stride = parseFloat(strideSlider.value);
       const cadence = Math.ceil(calculateCadence(pace, stride));
 
-      // Update cadence slider and input
+      // Update cadence controls
       cadenceSlider.value = cadence.toFixed(0);
       cadenceInput.value = cadence.toFixed(0);
 
@@ -172,5 +221,4 @@
 
   </script>
 </body>
-
 </html>
