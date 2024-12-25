@@ -31,10 +31,6 @@ class Utils {
         const parsed = Number.parseFloat(value);
         return Number.isNaN(parsed) ? fallback : parsed;
     }
-
-    static clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
-    }
 }
 
 // DOM Class
@@ -84,23 +80,14 @@ class DOMElements {
 // Enhanced Calculator Class
 class RunningCalculator {
     static calculatePace(cadence, stride) {
-        if (cadence <= 0 || stride <= 0) {
-            throw new ValidationError('Cadence and stride must be positive numbers');
-        }
         return 1000 / (cadence * stride);
     }
 
     static calculateCadence(pace, stride) {
-        if (pace <= 0 || stride <= 0) {
-            throw new ValidationError('Pace and stride must be positive numbers');
-        }
         return Math.ceil((1000 / pace) / stride);
     }
 
     static formatPace(pace) {
-        if (pace <= 0) {
-            throw new ValidationError('Pace must be a positive number');
-        }
         const totalSeconds = Math.round(pace * 60);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
@@ -113,8 +100,6 @@ class RunningCalculator {
 
 // Enhanced State Management
 class StateManager {
-    static #STATE_KEYS = ['cadence', 'stride', 'paceMinutes', 'paceSeconds'];
-
     static save(state) {
         try {
             Object.entries(state).forEach(([key, value]) => {
@@ -140,38 +125,26 @@ class StateManager {
             return CONFIG.defaults;
         }
     }
-
-    static clear() {
-        this.#STATE_KEYS.forEach(key => localStorage.removeItem(key));
-    }
 }
 
 // Enhanced UI Controller
 class UIController {
     #dom;
-    #errorDisplay;
 
     constructor() {
         this.#dom = new DOMElements();
-        this.#errorDisplay = document.getElementById('error-display');
         this.#initializeEventListeners();
     }
 
     #showErrorMessage(message) {
-        if (this.#errorDisplay) {
-            this.#errorDisplay.textContent = message;
-            this.#errorDisplay.classList.add('visible');
-            // Auto-hide after 3 seconds
+        const errorDisplay = document.getElementById('error-display');
+        if (errorDisplay) {
+            errorDisplay.textContent = message;
+            errorDisplay.classList.add('visible');
             setTimeout(() => {
-                this.#hideErrorMessage();
+                errorDisplay.classList.remove('visible');
+                errorDisplay.textContent = '';
             }, 3000);
-        }
-    }
-
-    #hideErrorMessage() {
-        if (this.#errorDisplay) {
-            this.#errorDisplay.classList.remove('visible');
-            this.#errorDisplay.textContent = '';
         }
     }
 
