@@ -35,18 +35,6 @@ class Utils {
     static clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
     }
-
-    static debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
 }
 
 // DOM Class
@@ -82,7 +70,7 @@ class DOMElements {
             pace: {
                 minutes: {
                     min: Utils.parseFloat(this.pace.minutes.getAttribute('min'), 1),
-                    max: Utils.parseFloat(this.pace.minutes.getAttribute('max'), 10)
+                    max: Utils.parseFloat(this.pace.minutes.getAttribute('max'), 9)
                 },
                 seconds: {
                     min: Utils.parseFloat(this.pace.seconds.getAttribute('min'), 0),
@@ -113,8 +101,9 @@ class RunningCalculator {
         if (pace <= 0) {
             throw new ValidationError('Pace must be a positive number');
         }
-        const minutes = Math.floor(pace);
-        const seconds = Math.round((pace - minutes) * 60);
+        const totalSeconds = Math.round(pace * 60);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
         return {
             minutes: minutes.toString().padStart(2, '0'),
             seconds: seconds.toString().padStart(2, '0')
@@ -160,74 +149,97 @@ class StateManager {
 // Enhanced UI Controller
 class UIController {
     #dom;
-    #lastValidState;
+    #errorDisplay;
 
     constructor() {
         this.#dom = new DOMElements();
-        this.#lastValidState = StateManager.load();
+        this.#errorDisplay = document.getElementById('error-display');
         this.#initializeEventListeners();
+    }
+
+    #showErrorMessage(message) {
+        if (this.#errorDisplay) {
+            this.#errorDisplay.textContent = message;
+            this.#errorDisplay.classList.add('visible');
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                this.#hideErrorMessage();
+            }, 3000);
+        }
+    }
+
+    #hideErrorMessage() {
+        if (this.#errorDisplay) {
+            this.#errorDisplay.classList.remove('visible');
+            this.#errorDisplay.textContent = '';
+        }
     }
 
     #handleError(error) {
         if (error instanceof ValidationError) {
+            this.#showErrorMessage(error.message);
             console.warn(error.message);
-            this.#restoreLastValidState();
+            this.loadState();
         } else {
+            this.#showErrorMessage('發生意外錯誤 (An unexpected error occurred)');
             console.error('Unexpected error:', error);
         }
     }
 
-    #restoreLastValidState() {
-        this.loadState(this.#lastValidState);
-    }
-
-    #updateLastValidState() {
-        this.#lastValidState = {
-            cadence: Utils.parseFloat(this.#dom.cadence.input.value),
-            stride: Utils.parseFloat(this.#dom.stride.input.value),
-            pace: {
-                minutes: Utils.parseFloat(this.#dom.pace.minutes.value),
-                seconds: Utils.parseFloat(this.#dom.pace.seconds.value)
-            }
-        };
-    }
-
     #initializeEventListeners() {
-        const debouncedSave = Utils.debounce(() => this.saveState(), 500);
-
         // Event handler setup
         this.#setupCadenceEvents();
         this.#setupStrideEvents();
         this.#setupPaceEvents();
-
-        // Add debounced save to all input events
-        ['input', 'change'].forEach(eventType => {
-            document.querySelectorAll('input').forEach(input => {
-                input.addEventListener(eventType, debouncedSave);
-            });
-        });
     }
 
     #setupCadenceEvents() {
-        ['slider', 'input'].forEach(type => {
-            this.#dom.cadence[type].addEventListener('input', () => {
-                try {
-                    const cadence = Utils.parseFloat(this.#dom.cadence[type].value);
+        // For cadence slider
+        this.#dom.cadence.slider.addEventListener('input', () => {
+            try {
+                const cadence = Utils.parseFloat(this.#dom.cadence.slider.value);
 
-                    // Get stride value and calculate pace
-                    const stride = Utils.parseFloat(this.#dom.stride.slider.value);
-                    const pace = RunningCalculator.calculatePace(cadence, stride);
-                    const { minutes, seconds } = RunningCalculator.formatPace(pace);
+                // Get stride value and calculate pace
+                const stride = Utils.parseFloat(this.#dom.stride.slider.value);
+                const pace = RunningCalculator.calculatePace(cadence, stride);
+                const { minutes, seconds } = RunningCalculator.formatPace(pace);
 
-                    if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
-                        this.#dom.cadence.slider.value = cadence;
-                        this.#dom.cadence.input.value = cadence;
-                        this.updatePace(pace);
-                    }
-                } catch (error) {
-                    this.#handleError(error);
+                const { ok, error } =
+                    this.isValidInputsWithError(cadence, stride, parseInt(minutes), parseInt(seconds));
+
+                if (!ok) {
+                    throw new ValidationError(error);
                 }
-            });
+
+                this.#dom.cadence.input.value = cadence;
+                this.updatePace(pace);
+            } catch (error) {
+                this.#handleError(error);
+            }
+        });
+
+        // For cadence input
+        this.#dom.cadence.input.addEventListener('change', () => {
+            try {
+                const cadence = Utils.parseFloat(this.#dom.cadence.input.value);
+
+                // Get stride value and calculate pace
+                const stride = Utils.parseFloat(this.#dom.stride.slider.value);
+                const pace = RunningCalculator.calculatePace(cadence, stride);
+                const { minutes, seconds } = RunningCalculator.formatPace(pace);
+
+                const { ok, error } =
+                    this.isValidInputsWithError(cadence, stride, parseInt(minutes), parseInt(seconds));
+
+                if (!ok) {
+                    throw new ValidationError(error);
+                }
+
+                this.#dom.cadence.slider.value = cadence;
+                this.updatePace(pace);
+            } catch (error) {
+                this.#handleError(error);
+            }
         });
     }
 
@@ -242,18 +254,22 @@ class UIController {
                 const pace = RunningCalculator.calculatePace(cadence, stride);
                 const { minutes, seconds } = RunningCalculator.formatPace(pace);
 
-                if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
-                    this.#dom.stride.slider.value = stride;
-                    this.#dom.stride.input.value = stride.toFixed(2);
-                    this.updatePace(pace);
+                const { ok, error } =
+                    this.isValidInputsWithError(cadence, stride, parseInt(minutes), parseInt(seconds));
+
+                if (!ok) {
+                    throw new ValidationError(error);
                 }
+
+                this.#dom.stride.input.value = stride.toFixed(2);
+                this.updatePace(pace);
             } catch (error) {
                 this.#handleError(error);
             }
         });
 
         // For stride input
-        this.#dom.stride.input.addEventListener('input', () => {
+        this.#dom.stride.input.addEventListener('change', () => {
             try {
                 const stride = Utils.parseFloat(this.#dom.stride.input.value);
 
@@ -262,19 +278,21 @@ class UIController {
                 const pace = RunningCalculator.calculatePace(cadence, stride);
                 const { minutes, seconds } = RunningCalculator.formatPace(pace);
 
-                if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
-                    this.#dom.stride.slider.value = stride;
-                    this.updatePace(pace);
+                const { ok, error } =
+                    this.isValidInputsWithError(cadence, stride, parseInt(minutes), parseInt(seconds));
+
+                if (!ok) {
+                    throw new ValidationError(error);
                 }
+
+                //  Limit stride input to 2 decimal places
+                this.#dom.stride.input.value = stride.toFixed(2);
+
+                this.#dom.stride.slider.value = stride;
+                this.updatePace(pace);
             } catch (error) {
                 this.#handleError(error);
             }
-        });
-
-        // Limit stride input to 2 decimal places
-        this.#dom.stride.input.addEventListener('blur', () => {
-            const value = Utils.parseFloat(this.#dom.stride.input.value);
-            this.#dom.stride.input.value = value.toFixed(2);
         });
     }
 
@@ -288,18 +306,23 @@ class UIController {
                 // calculate cadence
                 const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
 
-                if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
-                    this.#dom.pace.minutes.value = minutes;
-                    this.#dom.pace.seconds.value = seconds;
-                    this.updateCadence(cadence);
+                const { ok, error } =
+                    this.isValidInputsWithError(cadence, stride, parseInt(minutes), parseInt(seconds));
+
+                if (!ok) {
+                    throw new ValidationError(error);
                 }
+
+                this.#dom.pace.minutes.value = minutes;
+                this.#dom.pace.seconds.value = seconds;
+                this.updateCadence(cadence);
             } catch (error) {
                 this.#handleError(error);
             }
         });
 
         ['minutes', 'seconds'].forEach(type => {
-            this.#dom.pace[type].addEventListener('input', () => {
+            this.#dom.pace[type].addEventListener('change', () => {
                 try {
                     const minutes = Utils.parseFloat(this.#dom.pace.minutes.value);
                     const seconds = Utils.parseFloat(this.#dom.pace.seconds.value);
@@ -309,10 +332,15 @@ class UIController {
                     const pace = minutes + seconds / 60;
                     const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
 
-                    if (this.isValidInputs(cadence, stride, minutes, seconds)) {
-                        this.#dom.pace.slider.value = pace;
-                        this.updateCadence(cadence);
+                    const { ok, error } =
+                        this.isValidInputsWithError(cadence, stride, parseInt(minutes), parseInt(seconds));
+
+                    if (!ok) {
+                        throw new ValidationError(error);
                     }
+
+                    this.#dom.pace.slider.value = pace;
+                    this.updateCadence(cadence);
                 } catch (error) {
                     this.#handleError(error);
                 }
@@ -353,10 +381,29 @@ class UIController {
             seconds <= this.#dom.limits.pace.seconds.max;
     }
 
-    isValidInputs(cadence, stride, minutes, seconds) {
-        return this.isValidCadence(cadence) &&
-            this.isValidStride(stride) &&
-            this.isValidPace(minutes, seconds);
+    isValidInputsWithError(cadence, stride, minutes, seconds) {
+        if (!this.isValidCadence(cadence)) {
+            return {
+                ok: false,
+                error: '步頻超出範圍 (Cadence out of range: 140-230)'
+            };
+        }
+        if (!this.isValidStride(stride)) {
+            return {
+                ok: false,
+                error: '步幅超出範圍 (Stride out of range: 0.1-2.0)'
+            };
+        }
+        if (!this.isValidPace(minutes, seconds)) {
+            return {
+                ok: false,
+                error: '配速超出範圍 (Pace out of range: 1:00-09:59)'
+            };
+        }
+        return {
+            ok: true,
+            error: ''
+        };
     }
 
     saveState() {
@@ -381,8 +428,6 @@ class UIController {
 
             const totalPace = state.pace.minutes + (state.pace.seconds / 60);
             this.#dom.pace.slider.value = totalPace;
-
-            this.#updateLastValidState();
         } catch (error) {
             this.#handleError(error);
         }
