@@ -117,11 +117,7 @@ class UIController {
         this.initializeEventListeners();
     }
 
-    updatePace() {
-        const cadence = Utils.parseFloat(this.dom.cadence.slider.value);
-        const stride = Utils.parseFloat(this.dom.stride.slider.value);
-        const pace = RunningCalculator.calculatePace(cadence, stride);
-
+    updatePace(pace) {
         this.dom.pace.slider.value = pace.toFixed(3);
         const { minutes, seconds } = RunningCalculator.formatPace(pace);
         this.dom.pace.minutes.value = minutes;
@@ -130,13 +126,11 @@ class UIController {
         this.saveState();
     }
 
-    updateCadence(pace, stride) {
-        const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
-        if (this.isValidCadence(cadence)) {
-            this.dom.cadence.slider.value = cadence.toString();
-            this.dom.cadence.input.value = cadence.toString();
-            this.saveState();
-        }
+    updateCadence(cadence) {
+        this.dom.cadence.slider.value = cadence.toString();
+        this.dom.cadence.input.value = cadence.toString();
+
+        this.saveState();
     }
 
     isValidCadence(cadence) {
@@ -156,15 +150,27 @@ class UIController {
             seconds <= this.dom.limits.pace.seconds.max;
     }
 
+    isValidInputs(cadence, stride, minutes, seconds) {
+        return this.isValidCadence(cadence) &&
+            this.isValidStride(stride) &&
+            this.isValidPace(minutes, seconds);
+    }
+
     initializeEventListeners() {
         // Cadence events
         ['slider', 'input'].forEach(type => {
             this.dom.cadence[type].addEventListener('input', () => {
-                const value = Utils.parseFloat(this.dom.cadence[type].value);
-                if (this.isValidCadence(value)) {
-                    this.dom.cadence.slider.value = value;
-                    this.dom.cadence.input.value = value;
-                    this.updatePace();
+                const cadence = Utils.parseFloat(this.dom.cadence[type].value);
+
+                // Get stride value and calculate pace
+                const stride = Utils.parseFloat(this.dom.stride.slider.value);
+                const pace = RunningCalculator.calculatePace(cadence, stride);
+                const { minutes, seconds } = RunningCalculator.formatPace(pace);
+
+                if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
+                    this.dom.cadence.slider.value = cadence;
+                    this.dom.cadence.input.value = cadence;
+                    this.updatePace(pace);
                 }
             });
         });
@@ -172,20 +178,32 @@ class UIController {
         // Stride events
         // For stride slider
         this.dom.stride.slider.addEventListener('input', () => {
-            const value = Utils.parseFloat(this.dom.stride.slider.value);
-            if (this.isValidStride(value)) {
-                this.dom.stride.slider.value = value;
-                this.dom.stride.input.value = value.toFixed(2);
-                this.updatePace();
+            const stride = Utils.parseFloat(this.dom.stride.slider.value);
+
+            // Get cadence value and calculate pace
+            const cadence = Utils.parseFloat(this.dom.cadence.slider.value);
+            const pace = RunningCalculator.calculatePace(cadence, stride);
+            const { minutes, seconds } = RunningCalculator.formatPace(pace);
+
+            if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
+                this.dom.stride.slider.value = stride;
+                this.dom.stride.input.value = stride.toFixed(2);
+                this.updatePace(pace);
             }
         });
 
         // For stride input
         this.dom.stride.input.addEventListener('input', () => {
-            const value = Utils.parseFloat(this.dom.stride.input.value);
-            if (this.isValidStride(value)) {
-                this.dom.stride.slider.value = value;
-                this.updatePace();
+            const stride = Utils.parseFloat(this.dom.stride.input.value);
+
+            // Get cadence value and calculate pace
+            const cadence = Utils.parseFloat(this.dom.cadence.slider.value);
+            const pace = RunningCalculator.calculatePace(cadence, stride);
+            const { minutes, seconds } = RunningCalculator.formatPace(pace);
+
+            if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
+                this.dom.stride.slider.value = stride;
+                this.updatePace(pace);
             }
         });
 
@@ -201,10 +219,13 @@ class UIController {
             const stride = Utils.parseFloat(this.dom.stride.slider.value);
             const { minutes, seconds } = RunningCalculator.formatPace(pace);
 
-            if (this.isValidPace(parseInt(minutes), parseInt(seconds))) {
+            // calculate cadence
+            const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
+
+            if (this.isValidInputs(cadence, stride, parseInt(minutes), parseInt(seconds))) {
                 this.dom.pace.minutes.value = minutes;
                 this.dom.pace.seconds.value = seconds;
-                this.updateCadence(pace, stride);
+                this.updateCadence(cadence);
             }
         });
 
@@ -213,11 +234,14 @@ class UIController {
                 const minutes = Utils.parseFloat(this.dom.pace.minutes.value);
                 const seconds = Utils.parseFloat(this.dom.pace.seconds.value);
 
-                if (this.isValidPace(minutes, seconds)) {
-                    const pace = minutes + seconds / 60;
-                    const stride = Utils.parseFloat(this.dom.stride.slider.value);
+                // Get stride value and calculate cadence
+                const stride = Utils.parseFloat(this.dom.stride.slider.value);
+                const pace = minutes + seconds / 60;
+                const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
+
+                if (this.isValidInputs(cadence, stride, minutes, seconds)) {
                     this.dom.pace.slider.value = pace;
-                    this.updateCadence(pace, stride);
+                    this.updateCadence(cadence);
                 }
             });
         });
@@ -246,8 +270,6 @@ class UIController {
 
         const totalPace = state.pace.minutes + (state.pace.seconds / 60);
         this.dom.pace.slider.value = totalPace;
-
-        this.updatePace();
     }
 }
 
