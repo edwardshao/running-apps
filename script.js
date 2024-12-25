@@ -1,53 +1,83 @@
-// Constants and DOM Elements
-const DOM = {
-    cadence: {
-        slider: document.getElementById('cadence-slider'),
-        input: document.getElementById('cadence-input')
+// Constants
+const CONFIG = {
+    elements: {
+        cadence: { id: { slider: 'cadence-slider', input: 'cadence-input' } },
+        stride: { id: { slider: 'stride-slider', input: 'stride-input' } },
+        pace: { id: { slider: 'pace-slider', minutes: 'pace-input-minutes', seconds: 'pace-input-seconds' } }
     },
-    stride: {
-        slider: document.getElementById('stride-slider'),
-        input: document.getElementById('stride-input')
-    },
-    pace: {
-        slider: document.getElementById('pace-slider'),
-        minutes: document.getElementById('pace-input-minutes'),
-        seconds: document.getElementById('pace-input-seconds')
+    defaults: {
+        cadence: 180,
+        stride: 0.9,
+        pace: { minutes: 5, seconds: 0 }
     }
 };
 
-// Input Constraints
-const LIMITS = {
-    cadence: {
-        max: parseFloat(DOM.cadence.input.getAttribute('max')) || 220,
-        min: parseFloat(DOM.cadence.input.getAttribute('min')) || 140
-    },
-    stride: {
-        max: parseFloat(DOM.stride.input.getAttribute('max')) || 1.3,
-        min: parseFloat(DOM.stride.input.getAttribute('min')) || 0.5
-    },
-    pace: {
-        minutes: {
-            max: parseFloat(DOM.pace.minutes.getAttribute('max')) || 10,
-            min: parseFloat(DOM.pace.minutes.getAttribute('min')) || 3
-        },
-        seconds: {
-            max: parseFloat(DOM.pace.seconds.getAttribute('max')) || 59,
-            min: parseFloat(DOM.pace.seconds.getAttribute('min')) || 0
-        }
+// Utils Class
+class Utils {
+    static getElement(id) {
+        const element = document.getElementById(id);
+        if (!element) throw new Error(`Element with id ${id} not found`);
+        return element;
     }
-};
+
+    static parseFloat(value, fallback = 0) {
+        const parsed = Number.parseFloat(value);
+        return Number.isNaN(parsed) ? fallback : parsed;
+    }
+}
+
+// DOM Class
+class DOMElements {
+    constructor() {
+        this.cadence = {
+            slider: Utils.getElement(CONFIG.elements.cadence.id.slider),
+            input: Utils.getElement(CONFIG.elements.cadence.id.input)
+        };
+        this.stride = {
+            slider: Utils.getElement(CONFIG.elements.stride.id.slider),
+            input: Utils.getElement(CONFIG.elements.stride.id.input)
+        };
+        this.pace = {
+            slider: Utils.getElement(CONFIG.elements.pace.id.slider),
+            minutes: Utils.getElement(CONFIG.elements.pace.id.minutes),
+            seconds: Utils.getElement(CONFIG.elements.pace.id.seconds)
+        };
+
+        this.limits = this.initializeLimits();
+    }
+
+    initializeLimits() {
+        return {
+            cadence: {
+                min: Utils.parseFloat(this.cadence.input.getAttribute('min'), 140),
+                max: Utils.parseFloat(this.cadence.input.getAttribute('max'), 230)
+            },
+            stride: {
+                min: Utils.parseFloat(this.stride.input.getAttribute('min'), 0.1),
+                max: Utils.parseFloat(this.stride.input.getAttribute('max'), 2.0)
+            },
+            pace: {
+                minutes: {
+                    min: Utils.parseFloat(this.pace.minutes.getAttribute('min'), 1),
+                    max: Utils.parseFloat(this.pace.minutes.getAttribute('max'), 10)
+                },
+                seconds: {
+                    min: Utils.parseFloat(this.pace.seconds.getAttribute('min'), 0),
+                    max: Utils.parseFloat(this.pace.seconds.getAttribute('max'), 59)
+                }
+            }
+        };
+    }
+}
 
 // Calculator Class
 class RunningCalculator {
     static calculatePace(cadence, stride) {
-        const distancePerMinute = cadence * stride;
-        return 1000 / distancePerMinute;
+        return 1000 / (cadence * stride);
     }
 
     static calculateCadence(pace, stride) {
-        const speedKmPerMinute = 1 / pace;
-        const distancePerMinute = speedKmPerMinute * 1000;
-        return distancePerMinute / stride;
+        return (1000 / pace) / stride;
     }
 
     static formatPace(pace) {
@@ -60,150 +90,169 @@ class RunningCalculator {
     }
 }
 
-// State Management
+// State Management Class
 class StateManager {
-    static save(key, value) {
-        localStorage.setItem(key, value);
+    static save(state) {
+        Object.entries(state).forEach(([key, value]) => {
+            localStorage.setItem(key, JSON.stringify(value));
+        });
     }
 
     static load() {
         return {
-            cadence: localStorage.getItem('cadence') || 180,
-            stride: localStorage.getItem('stride') || 0.9,
-            paceMinutes: localStorage.getItem('paceMinutes') || 5,
-            paceSeconds: localStorage.getItem('paceSeconds') || 0
+            cadence: Utils.parseFloat(JSON.parse(localStorage.getItem('cadence')), CONFIG.defaults.cadence),
+            stride: Utils.parseFloat(JSON.parse(localStorage.getItem('stride')), CONFIG.defaults.stride),
+            pace: {
+                minutes: Utils.parseFloat(JSON.parse(localStorage.getItem('paceMinutes')), CONFIG.defaults.pace.minutes),
+                seconds: Utils.parseFloat(JSON.parse(localStorage.getItem('paceSeconds')), CONFIG.defaults.pace.seconds)
+            }
         };
     }
 }
 
-// UI Controller
+// UI Controller Class
 class UIController {
-    static updatePace() {
-        const cadence = parseFloat(DOM.cadence.slider.value);
-        const stride = parseFloat(DOM.stride.slider.value);
+    constructor() {
+        this.dom = new DOMElements();
+        this.initializeEventListeners();
+    }
+
+    updatePace() {
+        const cadence = Utils.parseFloat(this.dom.cadence.slider.value);
+        const stride = Utils.parseFloat(this.dom.stride.slider.value);
         const pace = RunningCalculator.calculatePace(cadence, stride);
 
-        DOM.pace.slider.value = pace.toFixed(3);
-        const formatPaceString = RunningCalculator.formatPace(pace);
-        DOM.pace.minutes.value = formatPaceString.minutes;
-        DOM.pace.seconds.value = formatPaceString.seconds;
+        this.dom.pace.slider.value = pace.toFixed(3);
+        const { minutes, seconds } = RunningCalculator.formatPace(pace);
+        this.dom.pace.minutes.value = minutes;
+        this.dom.pace.seconds.value = seconds;
+
+        this.saveState();
     }
 
-    static isCalculatedCadenceValid(pace, stride) {
+    updateCadence(pace, stride) {
         const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
-        return cadence >= LIMITS.cadence.min && cadence <= LIMITS.cadence.max;
+        if (this.isValidCadence(cadence)) {
+            this.dom.cadence.slider.value = cadence.toString();
+            this.dom.cadence.input.value = cadence.toString();
+            this.saveState();
+        }
     }
 
-    static updateCadence(pace, stride) {
-        const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
-        DOM.cadence.slider.value = cadence.toFixed(0);
-        DOM.cadence.input.value = cadence.toFixed(0);
+    isValidCadence(cadence) {
+        return cadence >= this.dom.limits.cadence.min &&
+            cadence <= this.dom.limits.cadence.max;
     }
 
-    static initializeEventListeners() {
+    isValidStride(stride) {
+        return stride >= this.dom.limits.stride.min &&
+            stride <= this.dom.limits.stride.max;
+    }
+
+    isValidPace(minutes, seconds) {
+        return minutes >= this.dom.limits.pace.minutes.min &&
+            minutes <= this.dom.limits.pace.minutes.max &&
+            seconds >= this.dom.limits.pace.seconds.min &&
+            seconds <= this.dom.limits.pace.seconds.max;
+    }
+
+    initializeEventListeners() {
         // Cadence events
-        DOM.cadence.slider.addEventListener('input', () => {
-            DOM.cadence.input.value = DOM.cadence.slider.value;
-            UIController.updatePace();
-            UIController.saveState();
-        });
-
-        DOM.cadence.input.addEventListener('input', () => {
-            if (DOM.cadence.input.value > LIMITS.cadence.max ||
-                DOM.cadence.input.value < LIMITS.cadence.min
-            ) {
-                return;
-            }
-
-            DOM.cadence.slider.value = DOM.cadence.input.value;
-            UIController.updatePace();
-            UIController.saveState();
+        ['slider', 'input'].forEach(type => {
+            this.dom.cadence[type].addEventListener('input', () => {
+                const value = Utils.parseFloat(this.dom.cadence[type].value);
+                if (this.isValidCadence(value)) {
+                    this.dom.cadence.slider.value = value;
+                    this.dom.cadence.input.value = value;
+                    this.updatePace();
+                }
+            });
         });
 
         // Stride events
-        DOM.stride.slider.addEventListener('input', () => {
-            DOM.stride.input.value = parseFloat(DOM.stride.slider.value).toFixed(2);
-            UIController.updatePace();
-            UIController.saveState();
+        // For stride slider
+        this.dom.stride.slider.addEventListener('input', () => {
+            const value = Utils.parseFloat(this.dom.stride.slider.value);
+            if (this.isValidStride(value)) {
+                this.dom.stride.slider.value = value;
+                this.dom.stride.input.value = value.toFixed(2);
+                this.updatePace();
+            }
         });
 
-        DOM.stride.input.addEventListener('input', () => {
-            if (DOM.stride.input.value > LIMITS.stride.max ||
-                DOM.stride.input.value < LIMITS.stride.min
-            ) {
-                return;
+        // For stride input
+        this.dom.stride.input.addEventListener('input', () => {
+            const value = Utils.parseFloat(this.dom.stride.input.value);
+            if (this.isValidStride(value)) {
+                this.dom.stride.slider.value = value;
+                this.updatePace();
             }
-            DOM.stride.slider.value = DOM.stride.input.value;
-            UIController.updatePace();
-            UIController.saveState();
+        });
+
+        // Limit stride input to 2 decimal places
+        this.dom.stride.input.addEventListener('blur', () => {
+            const value = Utils.parseFloat(this.dom.stride.input.value);
+            this.dom.stride.input.value = value.toFixed(2);
         });
 
         // Pace events
-        DOM.pace.slider.addEventListener('input', () => {
-            const pace = parseFloat(DOM.pace.slider.value);
-            const stride = parseFloat(DOM.stride.slider.value);
-            if (UIController.isCalculatedCadenceValid(pace, stride)) {
-                UIController.updateCadence(pace, stride);
-                const formatPaceString = RunningCalculator.formatPace(pace);
-                DOM.pace.minutes.value = formatPaceString.minutes;
-                DOM.pace.seconds.value = formatPaceString.seconds;
-                UIController.saveState();
+        this.dom.pace.slider.addEventListener('input', () => {
+            const pace = Utils.parseFloat(this.dom.pace.slider.value);
+            const stride = Utils.parseFloat(this.dom.stride.slider.value);
+            const { minutes, seconds } = RunningCalculator.formatPace(pace);
+
+            if (this.isValidPace(parseInt(minutes), parseInt(seconds))) {
+                this.dom.pace.minutes.value = minutes;
+                this.dom.pace.seconds.value = seconds;
+                this.updateCadence(pace, stride);
             }
         });
 
         ['minutes', 'seconds'].forEach(type => {
-            DOM.pace[type].addEventListener('input', () => {
-                if (DOM.pace.minutes.value > LIMITS.pace.minutes.max ||
-                    DOM.pace.minutes.value < LIMITS.pace.minutes.min
-                ) {
-                    return;
-                }
+            this.dom.pace[type].addEventListener('input', () => {
+                const minutes = Utils.parseFloat(this.dom.pace.minutes.value);
+                const seconds = Utils.parseFloat(this.dom.pace.seconds.value);
 
-                if (DOM.pace.seconds.value > LIMITS.pace.seconds.max ||
-                    DOM.pace.seconds.value < LIMITS.pace.seconds.min
-                ) {
-                    return;
-                }
-
-                const pace = parseFloat(DOM.pace.minutes.value) + parseFloat(DOM.pace.seconds.value) / 60;
-                const stride = parseFloat(DOM.stride.slider.value);
-                if (UIController.isCalculatedCadenceValid(pace, stride)) {
-                    DOM.pace.slider.value = pace;
-                    UIController.updateCadence(pace, parseFloat(DOM.stride.slider.value));
-                    UIController.saveState();
+                if (this.isValidPace(minutes, seconds)) {
+                    const pace = minutes + seconds / 60;
+                    const stride = Utils.parseFloat(this.dom.stride.slider.value);
+                    this.dom.pace.slider.value = pace;
+                    this.updateCadence(pace, stride);
                 }
             });
         });
     }
 
-    static saveState() {
-        StateManager.save('cadence', DOM.cadence.input.value);
-        StateManager.save('stride', DOM.stride.input.value);
-        StateManager.save('paceMinutes', DOM.pace.minutes.value);
-        StateManager.save('paceSeconds', DOM.pace.seconds.value);
+    saveState() {
+        StateManager.save({
+            cadence: this.dom.cadence.input.value,
+            stride: this.dom.stride.input.value,
+            paceMinutes: this.dom.pace.minutes.value,
+            paceSeconds: this.dom.pace.seconds.value
+        });
     }
 
-    static loadState() {
+    loadState() {
         const state = StateManager.load();
 
-        DOM.cadence.slider.value = state.cadence;
-        DOM.cadence.input.value = state.cadence;
+        this.dom.cadence.slider.value = state.cadence;
+        this.dom.cadence.input.value = state.cadence;
 
-        DOM.stride.slider.value = state.stride;
-        DOM.stride.input.value = parseFloat(state.stride).toFixed(2);
+        this.dom.stride.slider.value = state.stride;
+        this.dom.stride.input.value = state.stride;
 
-        DOM.pace.minutes.value = state.paceMinutes;
-        DOM.pace.seconds.value = state.paceSeconds;
+        this.dom.pace.minutes.value = state.pace.minutes;
+        this.dom.pace.seconds.value = state.pace.seconds;
 
-        const totalPaceInMinutes = parseFloat(state.paceMinutes) + (parseFloat(state.paceSeconds) / 60);
-        DOM.pace.slider.value = totalPaceInMinutes;
+        const totalPace = state.pace.minutes + (state.pace.seconds / 60);
+        this.dom.pace.slider.value = totalPace;
 
-        UIController.updatePace();
+        this.updatePace();
     }
 }
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
-    UIController.loadState();
-    UIController.initializeEventListeners();
+    const app = new UIController();
+    app.loadState();
 });
