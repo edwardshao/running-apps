@@ -8,7 +8,7 @@ const CONFIG = {
     defaults: {
         cadence: 180,
         stride: 0.9,
-        pace: { minutes: 5, seconds: 0 }
+        pace: { minutes: 6, seconds: 10 }
     }
 };
 
