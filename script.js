@@ -49,13 +49,13 @@ class RunningCalculator {
         return Math.ceil((1000 / pace) / stride);
     }
 
-    static formatPace(pace) {
+    static parseDecimalToPace(pace) {
         const totalSeconds = Math.round(pace * 60);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return {
-            minutes: minutes.toString().padStart(2, '0'),
-            seconds: seconds.toString().padStart(2, '0')
+            minutes: minutes,
+            seconds: seconds
         };
     }
 
@@ -95,6 +95,7 @@ class StateManager {
 class UIController {
     #elements = {};
     #validators = {};
+    #previousPaceSeconds = 0;
 
     constructor() {
         this.#initializeElements();
@@ -165,7 +166,7 @@ class UIController {
             const cadence = Utils.parseFloat(this.#elements.cadence[type].value);
             const stride = Utils.parseFloat(this.#elements.stride.slider.value);
             const pace = RunningCalculator.calculatePace(cadence, stride);
-            const { minutes, seconds } = RunningCalculator.formatPace(pace);
+            const { minutes, seconds } = RunningCalculator.parseDecimalToPace(pace);
 
             const validation = this.#validateInputs({ cadence, stride, minutes: parseInt(minutes), seconds: parseInt(seconds) });
             if (!validation.ok) throw new ValidationError(validation.error);
@@ -183,7 +184,7 @@ class UIController {
             const stride = Utils.parseFloat(this.#elements.stride[type].value);
             const cadence = Utils.parseFloat(this.#elements.cadence.slider.value);
             const pace = RunningCalculator.calculatePace(cadence, stride);
-            const { minutes, seconds } = RunningCalculator.formatPace(pace);
+            const { minutes, seconds } = RunningCalculator.parseDecimalToPace(pace);
 
             const validation = this.#validateInputs({ cadence, stride, minutes: parseInt(minutes), seconds: parseInt(seconds) });
             if (!validation.ok) throw new ValidationError(validation.error);
@@ -200,7 +201,7 @@ class UIController {
         try {
             const pace = Utils.parseFloat(this.#elements.pace.slider.value);
             const stride = Utils.parseFloat(this.#elements.stride.slider.value);
-            const { minutes, seconds } = RunningCalculator.formatPace(pace);
+            const { minutes, seconds } = RunningCalculator.parseDecimalToPace(pace);
             const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
 
             const validation = this.#validateInputs({ cadence, stride, minutes: parseInt(minutes), seconds: parseInt(seconds) });
@@ -216,8 +217,22 @@ class UIController {
 
     #handlePaceInputChange() {
         try {
-            const minutes = Utils.parseFloat(this.#elements.pace.minutes.value);
-            const seconds = Utils.parseFloat(this.#elements.pace.seconds.value);
+            let minutes = Utils.parseFloat(this.#elements.pace.minutes.value);
+            let seconds = Utils.parseFloat(this.#elements.pace.seconds.value);
+
+            if (seconds > this.#previousPaceSeconds) {
+                if (seconds > 59) {
+                    minutes++;
+                    seconds = 0;
+                }
+            } else {
+                if (seconds < 0) {
+                    minutes--;
+                    seconds = 59;
+                }
+            }
+            this.#previousPaceSeconds = seconds;
+
             const stride = Utils.parseFloat(this.#elements.stride.slider.value);
             const pace = RunningCalculator.parsePaceToDecimal(minutes, seconds);
             const cadence = Math.ceil(RunningCalculator.calculateCadence(pace, stride));
@@ -244,7 +259,7 @@ class UIController {
     }
 
     #updatePaceValues(pace) {
-        const { minutes, seconds } = RunningCalculator.formatPace(pace);
+        const { minutes, seconds } = RunningCalculator.parseDecimalToPace(pace);
         this.#elements.pace.slider.value = pace.toFixed(3);
         this.#elements.pace.minutes.value = minutes;
         this.#elements.pace.seconds.value = seconds;
@@ -281,7 +296,10 @@ class UIController {
             this.#elements.stride.input.value = state.stride;
             this.#elements.pace.minutes.value = state.pace.minutes;
             this.#elements.pace.seconds.value = state.pace.seconds;
-            this.#elements.pace.slider.value = state.pace.minutes + (state.pace.seconds / 60);
+            this.#elements.pace.slider.value =
+                RunningCalculator.parsePaceToDecimal(state.pace.minutes, state.pace.seconds);
+
+            this.#previousPaceSeconds = this.#elements.pace.seconds.value;
         } catch (error) {
             this.#handleError(error);
         }
