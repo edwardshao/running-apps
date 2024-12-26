@@ -2,6 +2,8 @@
 <html>
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadence/Stride/Pace</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -18,24 +20,30 @@
     <div class="slider">
       <label for="cadence-slider">步頻 (Cadence):</label>
       <input type="range" id="cadence-slider" min="140" max="230" step="1" value="180">
-      <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="180">
-      <span class="unit">steps/min</span>
+      <div class="input-group">
+        <input type="number" id="cadence-input" class="input-field" min="140" max="230" step="1" value="180">
+        <span class="unit">steps/min</span>
+      </div>
     </div>
 
     <div class="slider">
       <label for="stride-slider">步幅 (Stride):</label>
       <input type="range" id="stride-slider" min="0.1" max="2.0" step="0.01" value="0.9">
-      <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.9">
-      <span class="unit">m</span>
+      <div class="input-group">
+        <input type="number" id="stride-input" class="input-field" min="0.1" max="2.0" step="0.01" value="0.9">
+        <span class="unit">m</span>
+      </div>
     </div>
 
     <div class="slider">
       <label for="pace-slider">配速 (Pace):</label>
       <input type="range" id="pace-slider" min="1" max="9.98" step="0.001" value="6.1667">
-      <input type="number" id="pace-input-minutes" class="input-field" min="1" max="9" step="1" value="6">
-      <span class="unit">min</span>
-      <input type="number" id="pace-input-seconds" class="input-field" min="-1" max="60" step="1" value="10">
-      <span class="unit">sec/km</span>
+      <div class="input-group">
+        <input type="number" id="pace-input-minutes" class="input-field" min="1" max="9" step="1" value="6">
+        <span class="unit">min</span>
+        <input type="number" id="pace-input-seconds" class="input-field" min="-1" max="60" step="1" value="10">
+        <span class="unit">sec/km</span>
+      </div>
     </div>
 
     <div class="error-message" id="error-display"></div>
