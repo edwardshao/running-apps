@@ -49,7 +49,15 @@
   </div>
 
   <script src="cadence.js"></script>
+  <script>
+    function updateParentHeight() {
+      const height = document.body.scrollHeight + 20;
+      window.parent.postMessage({ height: height }, '*');
+    }
 
+    window.addEventListener('load', updateParentHeight);
+    window.addEventListener('resize', updateParentHeight);
+  </script>
 </body>
 
 </html>

@@ -13,6 +13,15 @@
     <h1>Pace Calculator</h1>
     <p>Coming Soon...</p>
   </div>
+  <script>
+    function updateParentHeight() {
+      const height = document.body.scrollHeight + 20;
+      window.parent.postMessage({ height: height }, '*');
+    }
+
+    window.addEventListener('load', updateParentHeight);
+    window.addEventListener('resize', updateParentHeight);
+  </script>
 </body>
 
 </html>
