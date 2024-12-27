@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pace Calculator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Pace Calculator</h1>
+    <p>Coming Soon...</p>
+  </div>
+  <script>
+    function updateParentHeight() {
+      const height = document.body.scrollHeight + 20;
+      window.parent.postMessage({ height: height }, '*');
+    }
+
+    window.addEventListener('load', updateParentHeight);
+    window.addEventListener('resize', updateParentHeight);
+  </script>
+</body>
+
+</html>
