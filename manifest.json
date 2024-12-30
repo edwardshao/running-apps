@@ -2,7 +2,7 @@
     "name": "Running Calculators",
     "short_name": "RunCalc",
     "description": "Cadence and pace calculators for runners",
-    "start_url": "/index.html",
+    "start_url": "index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#f0f0f0",
