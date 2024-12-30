@@ -1,57 +1,71 @@
-const APP_PREFIX = 'RunningCalculator_';
-const VERSION = 'v1';
-const CACHE_NAME = APP_PREFIX + VERSION;
+const CACHE_CONFIG = {
+    prefix: 'RunningCalculator_',
+    version: 'v1',
+    resources: [
+        '/',
+        '/index.html',
+        '/cadence.html',
+        '/pace.html',
+        '/css/styles.css',
+        '/js/cadence.js',
+        '/js/main.js',
+        '/img/runner.png'
+    ]
+};
 
-const urlsToCache = [
-    '/index.html',
-    '/cadence.html',
-    '/pace.html',
-    '/css/styles.css',
-    '/js/cadence.js',
-    '/img/runner.png'
-];
+const CACHE_NAME = CACHE_CONFIG.prefix + CACHE_CONFIG.version;
 
-self.addEventListener('install', function (e) {
-    e.waitUntil(
-        caches.open(CACHE_NAME).then(function (cache) {
-            console.log('Installing cache : ', CACHE_NAME);
-            return cache.addAll(urlsToCache)
-        })
-    )
-})
-
-self.addEventListener('activate', (e) => {
-    e.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting cache : ', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log(`Cache ${CACHE_NAME} being installed`);
+                return cache.addAll(CACHE_CONFIG.resources);
+            })
+            .catch(error => console.error('Cache installation failed:', error))
     );
 });
 
-self.addEventListener('fetch', (e) => {
-    console.log('Fetch event for ', e.request.url, ' mode: ', e.request.mode);
-    if (urlsToCache.some(url => e.request.url.includes(url))) {
-        e.respondWith(caches.open(CACHE_NAME).then((cache) => {
-            console.log('Fetching from network first');
-            return fetch(e.request.url).then((fetchedResponse) => {
-                console.log('Putting in cache');
-                cache.put(e.request, fetchedResponse.clone());
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys()
+            .then(cacheNames => Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName.startsWith(CACHE_CONFIG.prefix) && cacheName !== CACHE_NAME) {
+                        console.log(`Deleting cache ${cacheName}`);
+                        return caches.delete(cacheName);
+                    }
+                })
+            ))
+    );
+});
 
-                return fetchedResponse;
-            }).catch(() => {
-                console.log('Network unavailable: fetching from cache');
-                return cache.match(e.request.url);
-            });
-        }));
-    } else {
+self.addEventListener('fetch', (event) => {
+    if (!event.request.url.startsWith(self.location.origin) ||
+        event.request.method !== 'GET') {
         return;
     }
-}
-);
+
+    const isResourceCached = CACHE_CONFIG.resources.some(
+        resource => event.request.url.includes(resource)
+    );
+
+    if (!isResourceCached) return;
+
+    event.respondWith(
+        caches.open(CACHE_NAME)
+            .then(cache =>
+                cache.match(event.request)
+                    .then(cachedResponse => {
+                        const fetchPromise = fetch(event.request)
+                            .then(networkResponse => {
+                                cache.put(event.request, networkResponse.clone());
+                                return networkResponse;
+                            });
+
+                        // Return cached response immediately if available, otherwise wait for network
+                        return cachedResponse || fetchPromise;
+                    })
+            )
+    );
+});
