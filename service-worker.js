@@ -46,11 +46,10 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    const isResourceCached = CACHE_CONFIG.resources.some(
-        resource => event.request.url.includes(resource)
-    );
+    const requestURL = new URL(event.request.url);
+    const relativePath = requestURL.pathname;
 
-    if (!isResourceCached) return;
+    if (!CACHE_CONFIG.resources.includes(relativePath)) return;
 
     event.respondWith(
         caches.open(CACHE_NAME)
