@@ -4,37 +4,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Running calculators for pace and cadence">
   <title>Running Calculators</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="img/runner.png">
 </head>
 
 <body>
   <div class="container">
     <div class="header">
       <h1>Running Calculators</h1>
-      <img src="runner.png" alt="Runner Icon">
+      <img src="img/runner.png" alt="Runner Icon">
     </div>
 
     <div class="decorative-line"></div>
 
-    <div class="links">
+    <nav class="links">
       <a href="cadence.html" target="iframe">Cadence Calculator</a> |
       <a href="pace.html" target="iframe">Pace Calculator</a>
-    </div>
+    </nav>
 
     <div class="decorative-line"></div>
 
-    <iframe name="iframe" src="cadence.html" width="100%" height="600px" frameborder="0" id="contentFrame"></iframe>
+    <iframe name="iframe" src="cadence.html" width="100%" height="600" frameborder="0" id="contentFrame"
+      title="Calculator Content"></iframe>
   </div>
 
-  <script>
-    window.addEventListener('message', function (e) {
-      const iframe = document.getElementById('contentFrame');
-      if (iframe) {
-        iframe.style.height = e.data.height + 'px';
-      }
-    });
-  </script>
+  <script src="js/main.js" defer></script>
 </body>
 
 </html>
