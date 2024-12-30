@@ -1,25 +1,26 @@
+const GITHUB_PAGE_PATH = '/running-apps';
 const CACHE_CONFIG = {
     prefix: 'RunningCalculator_',
     version: 'v1',
     resources: [
-        '',
-        'index.html',
-        'cadence.html',
-        'pace.html',
-        'css/styles.css',
-        'js/cadence.js',
-        'js/main.js',
-        'img/runner.png',
-        'icons/icon-48x48.png',
-        'icons/icon-72x72.png',
-        'icons/icon-96x96.png',
-        'icons/icon-128x128.png',
-        'icons/icon-144x144.png',
-        'icons/icon-152x152.png',
-        'icons/icon-192x192.png',
-        'icons/icon-256x256.png',
-        'icons/icon-384x384.png',
-        'icons/icon-512x512.png'
+        `${GITHUB_PAGE_PATH}/`,
+        `${GITHUB_PAGE_PATH}/index.html`,
+        `${GITHUB_PAGE_PATH}/cadence.html`,
+        `${GITHUB_PAGE_PATH}/pace.html`,
+        `${GITHUB_PAGE_PATH}/css/styles.css`,
+        `${GITHUB_PAGE_PATH}/js/cadence.js`,
+        `${GITHUB_PAGE_PATH}/js/main.js`,
+        `${GITHUB_PAGE_PATH}/img/runner.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-48x48.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-72x72.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-96x96.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-128x128.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-144x144.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-152x152.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-192x192.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-256x256.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-384x384.png`,
+        `${GITHUB_PAGE_PATH}/icons/icon-512x512.png`
     ]
 };
 
