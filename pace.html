@@ -15,7 +15,7 @@
     <div class="slider">
       <label for="distance-input">距離 (km):</label>
       <div class="input-group">
-        <input type="number" id="distance-input" class="input-field" step="0.0001">
+        <input type="number" id="distance-input" class="input-field" min="0.0001" step="0.0001">
         <select id="distance-preset" onchange="updateDistance(this.value)">
           <option value="other">Other</option>
           <option value="marathon">Marathon</option>
@@ -29,7 +29,7 @@
     <div class="slider">
       <label for="time-input">時間 (hh:mm:ss):</label>
       <div class="input-group">
-        <input type="number" id="time-input-hours" class="input-field" step="1">
+        <input type="number" id="time-input-hours" class="input-field" min="0" step="1">
         :
         <input type="number" id="time-input-minutes" class="input-field" min="0" max="59" step="1">
         :

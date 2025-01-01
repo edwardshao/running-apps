@@ -24,12 +24,26 @@ function calculatePace() {
         return;
     }
 
-    const totalMinutes = timeHours * 60 + timeMinutes + timeSeconds / 60;
+    // make sure distance > 0
+    if (distance <= 0) {
+        paceMinutesText.textContent = '-';
+        paceSecondsText.textContent = '-';
+        return;
+    }
 
-    const pace = totalMinutes / distance;
+    // make sure time values are positive and not all zero
+    if (timeHours < 0 || timeMinutes < 0 || timeSeconds < 0 ||
+        (timeHours == 0 && timeMinutes == 0 && timeSeconds == 0)) {
+        paceMinutesText.textContent = '-';
+        paceSecondsText.textContent = '-';
+        return;
+    }
 
-    const paceMinutes = Math.floor(pace);
-    const paceSeconds = Math.floor((pace - paceMinutes) * 60);
+    const totalSeconds = timeHours * 60 * 60 + timeMinutes * 60 + timeSeconds;
+    const secondsPerKm = totalSeconds / distance;
+    const paceMinutes = Math.floor(secondsPerKm / 60);
+    const paceSeconds = Math.floor(secondsPerKm % 60);
+
     paceMinutesText.textContent = paceMinutes.toString().padStart(2, '0');
     paceSecondsText.textContent = paceSeconds.toString().padStart(2, '0');
 }
