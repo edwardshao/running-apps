@@ -11,8 +11,41 @@
 <body>
   <div class="container">
     <h1>Pace Calculator</h1>
-    <p>Coming Soon...</p>
+
+    <div class="slider">
+      <label for="distance-input">距離 (km):</label>
+      <div class="input-group">
+        <input type="number" id="distance-input" class="input-field" step="0.0001">
+        <select id="distance-preset" onchange="updateDistance(this.value)">
+          <option value="other">Other</option>
+          <option value="marathon">Marathon</option>
+          <option value="half">Half Marathon</option>
+          <option value="10k">10K</option>
+          <option value="5k">5K</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="slider">
+      <label for="time-input">時間 (hh:mm:ss):</label>
+      <div class="input-group">
+        <input type="number" id="time-input-hours" class="input-field" step="1">
+        :
+        <input type="number" id="time-input-minutes" class="input-field" min="0" max="59" step="1">
+        :
+        <input type="number" id="time-input-seconds" class="input-field" min="0" max="59" step="1">
+      </div>
+    </div>
+
+    <div class="slider">
+      <label for="pace-slider">配速:</label>
+      <div class="input-group">
+        <b id="pace-minutes">-</b>:<b id="pace-seconds">-</b><b>min/km</b>
+      </div>
+    </div>
   </div>
+
+  <script src="js/pace.js"></script>
   <script>
     function updateParentHeight() {
       const height = document.body.scrollHeight + 20;
