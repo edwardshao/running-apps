@@ -13,10 +13,11 @@
     <h1>Pace Calculator</h1>
 
     <div class="slider">
-      <label for="distance-input">距離 (km):</label>
+      <label for="distance-input">距離 (Distance):</label>
       <div class="input-group">
         <input type="number" id="distance-input" class="input-field" min="0.0001" step="0.0001">
-        <select id="distance-preset" onchange="updateDistance(this.value)">
+        <span class="unit">km</span>
+        <select id="distance-preset">
           <option value="other">Other</option>
           <option value="marathon">Marathon</option>
           <option value="half">Half Marathon</option>
@@ -27,22 +28,26 @@
     </div>
 
     <div class="slider">
-      <label for="time-input">時間 (hh:mm:ss):</label>
+      <label for="time-input">時間 (Time):</label>
       <div class="input-group">
-        <input type="number" id="time-input-hours" class="input-field" min="0" step="1">
-        :
-        <input type="number" id="time-input-minutes" class="input-field" min="0" max="59" step="1">
-        :
-        <input type="number" id="time-input-seconds" class="input-field" min="0" max="59" step="1">
+        <input type="number" id="time-input-hours" class="input-field" min="0" step="1" value="0">
+        <span class="unit">h</span>
+        <input type="number" id="time-input-minutes" class="input-field" min="0" max="59" step="1" value="0">
+        <span class="unit">m</span>
+        <input type="number" id="time-input-seconds" class="input-field" min="0" max="59" step="1" value="0">
+        <span class="unit">s</span>
       </div>
     </div>
 
     <div class="slider">
-      <label for="pace-slider">配速:</label>
+      <label>配速 (Pace):</label>
       <div class="input-group">
-        <b id="pace-minutes">-</b>:<b id="pace-seconds">-</b><b>min/km</b>
+        <b id="pace-minutes">-</b>:<b id="pace-seconds">-</b>
+        <span class="unit">min/km</span>
       </div>
     </div>
+
+    <div class="error-message" id="error-display"></div>
   </div>
 
   <script src="js/pace.js"></script>
