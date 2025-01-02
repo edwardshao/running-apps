@@ -1,7 +1,7 @@
 const GITHUB_PAGE_PATH = '/running-apps';
 const CACHE_CONFIG = {
     prefix: 'RunningCalculator_',
-    version: 'v1',
+    version: 'v2',
     resources: [
         `${GITHUB_PAGE_PATH}/`,
         `${GITHUB_PAGE_PATH}/index.html`,
@@ -10,6 +10,7 @@ const CACHE_CONFIG = {
         `${GITHUB_PAGE_PATH}/css/styles.css`,
         `${GITHUB_PAGE_PATH}/js/cadence.js`,
         `${GITHUB_PAGE_PATH}/js/main.js`,
+        `${GITHUB_PAGE_PATH}/js/pace.js`,
         `${GITHUB_PAGE_PATH}/img/runner.png`,
         `${GITHUB_PAGE_PATH}/icons/icon-48x48.png`,
         `${GITHUB_PAGE_PATH}/icons/icon-72x72.png`,
