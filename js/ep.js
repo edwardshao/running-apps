@@ -51,4 +51,38 @@ document.addEventListener('DOMContentLoaded', () => {
     hoursInput.addEventListener('input', calculate);
     minutesInput.addEventListener('input', calculate);
     secondsInput.addEventListener('input', calculate);
+
+    const copyButton = document.getElementById('copy-button');
+    copyButton.addEventListener('click', () => {
+        const distance = distanceInput.value;
+        const gain = gainInput.value;
+        const hours = hoursInput.value || 0;
+        const minutes = minutesInput.value || 0;
+        const seconds = secondsInput.value || 0;
+
+        const ep = epResult.textContent;
+        const eph = ephResult.textContent;
+
+        if (ep === '-' || eph === '-') {
+            return; // Don't copy if there are no valid results
+        }
+
+        const resultText = `距離: ${distance} km
+爬升: ${gain} m
+時間: ${hours}h:${minutes}m:${seconds}s
+EP: ${ep}
+EPH: ${eph}`.trim();
+
+        navigator.clipboard.writeText(resultText)
+            .then(() => {
+                const originalButtonText = copyButton.textContent;
+                copyButton.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyButton.textContent = originalButtonText;
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+    });
 });
