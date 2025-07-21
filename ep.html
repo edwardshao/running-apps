@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP Calculator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>EP Calculator</h1>
+
+    <div class="slider">
+      <label for="distance-input">距離 (Distance):</label>
+      <div class="input-group">
+        <input type="number" id="distance-input" class="input-field" min="0" step="any">
+        <span class="unit">km</span>
+      </div>
+    </div>
+
+    <div class="slider">
+      <label for="gain-input">爬升 (Vertical Gain):</label>
+      <div class="input-group">
+        <input type="number" id="gain-input" class="input-field" min="0" step="any">
+        <span class="unit">m</span>
+      </div>
+    </div>
+
+    <div class="slider">
+        <label for="time-input">時間 (Time):</label>
+        <div class="input-group">
+            <input type="number" id="time-input-hours" class="input-field" min="0" step="1" placeholder="Hours">
+            <span class="unit">h</span>
+            <input type="number" id="time-input-minutes" class="input-field" min="0" max="59" step="1" placeholder="Mins">
+            <span class="unit">m</span>
+            <input type="number" id="time-input-seconds" class="input-field" min="0" max="59" step="1" placeholder="Secs">
+            <span class="unit">s</span>
+        </div>
+    </div>
+
+    <div class="slider">
+      <label>Effort Points (EP):</label>
+      <div class="input-group">
+        <b id="ep-result">-</b>
+      </div>
+    </div>
+
+    <div class="slider">
+      <label>Effort Points per Hour (EPH):</label>
+      <div class="input-group">
+        <b id="eph-result">-</b>
+      </div>
+    </div>
+
+    <div class="error-message" id="error-display"></div>
+  </div>
+
+  <script src="js/ep.js"></script>
+  <script>
+    function updateParentHeight() {
+      const height = document.body.scrollHeight + 20;
+      window.parent.postMessage({ height: height }, '*');
+    }
+
+    window.addEventListener('load', updateParentHeight);
+    window.addEventListener('resize', updateParentHeight);
+  </script>
+</body>
+
+</html>
