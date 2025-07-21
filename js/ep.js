@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             ephResult.textContent = '-';
         }
-        
+
         if (window.parent) {
             const height = document.body.scrollHeight + 20;
             window.parent.postMessage({ height: height }, '*');
