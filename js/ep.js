@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const secondsInput = document.getElementById('time-input-seconds');
     const epResult = document.getElementById('ep-result');
     const ephResult = document.getElementById('eph-result');
+    const paceResult = document.getElementById('pace-result');
     const errorDisplay = document.getElementById('error-display');
 
     function calculate() {
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(distance) || isNaN(gain) || distance <= 0 || gain < 0) {
             epResult.textContent = '-';
             ephResult.textContent = '-';
+            paceResult.textContent = '-';
             if ((distanceInput.value && distance <= 0) || (gainInput.value && gain < 0)) {
                 errorDisplay.textContent = 'Distance must be positive, and gain must not be negative.';
                 errorDisplay.classList.add('visible');
@@ -36,8 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (totalHours > 0) {
             const eph = ep / totalHours;
             ephResult.textContent = eph.toFixed(2);
+
+            const pace = 60 / eph;
+            paceResult.textContent = pace.toFixed(2) + ' min/km';
         } else {
             ephResult.textContent = '-';
+            paceResult.textContent = '-';
         }
 
         if (window.parent) {
@@ -62,8 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ep = epResult.textContent;
         const eph = ephResult.textContent;
+        const pace = paceResult.textContent;
 
-        if (ep === '-' || eph === '-') {
+        if (ep === '-' || eph === '-' || pace === '-') {
             return; // Don't copy if there are no valid results
         }
 
@@ -71,7 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
 爬升: ${gain} m
 時間: ${hours}h:${minutes}m:${seconds}s
 EP: ${ep}
-EPH: ${eph}`.trim();
+EPH: ${eph}
+EPH to Pace: ${pace}`.trim();
 
         navigator.clipboard.writeText(resultText)
             .then(() => {
