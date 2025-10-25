@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ephResult = document.getElementById('eph-result');
     const paceResult = document.getElementById('pace-result');
     const errorDisplay = document.getElementById('error-display');
+    const paceMinutes = document.getElementById('pace-minutes');
+    const paceSeconds = document.getElementById('pace-seconds');
 
     function calculate() {
         const distance = parseFloat(distanceInput.value);
@@ -39,11 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const eph = ep / totalHours;
             ephResult.textContent = eph.toFixed(2);
 
-            const pace = 60 / eph;
-            paceResult.textContent = pace.toFixed(2) + ' min/km';
+            // Calculate EPH to Pace
+            const paceInSeconds = 3600 / eph;
+            const minutes = Math.floor(paceInSeconds / 60);
+            const seconds = Math.floor(paceInSeconds % 60);
+            paceMinutes.textContent = minutes.toString().padStart(2, '0');
+            paceSeconds.textContent = seconds.toString().padStart(2, '0');
         } else {
             ephResult.textContent = '-';
-            paceResult.textContent = '-';
+            paceMinutes.textContent = '-';
+            paceSeconds.textContent = '-'; // Reset pace result if invalid
         }
 
         if (window.parent) {
@@ -68,9 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ep = epResult.textContent;
         const eph = ephResult.textContent;
-        const pace = paceResult.textContent;
+        const paceMinutesText = paceMinutes.textContent;
+        const paceSecondsText = paceSeconds.textContent;
 
-        if (ep === '-' || eph === '-' || pace === '-') {
+        if (ep === '-' || eph === '-' || paceMinutesText === '-' || paceSecondsText === '-') {
             return; // Don't copy if there are no valid results
         }
 
@@ -79,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 時間: ${hours}h:${minutes}m:${seconds}s
 EP: ${ep}
 EPH: ${eph}
-EPH to Pace: ${pace}`.trim();
+EPH to Pace: ${paceMinutesText}:${paceSecondsText} min/km`.trim(); // Format EPH to Pace
 
         navigator.clipboard.writeText(resultText)
             .then(() => {
