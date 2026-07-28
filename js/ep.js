@@ -10,6 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorDisplay = document.getElementById('error-display');
     const paceMinutes = document.getElementById('pace-minutes');
     const paceSeconds = document.getElementById('pace-seconds');
+    const time10kResult = document.getElementById('time-10k');
+    const timeHalfResult = document.getElementById('time-half');
+    const timeFullResult = document.getElementById('time-full');
+
+    const RACE_DISTANCES = {
+        tenK: 10,
+        half: 21.0975,
+        full: 42.195
+    };
+
+    function formatDuration(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = Math.floor(totalSeconds % 60);
+        return h > 0 ? `${h}h:${m}m:${s}s` : `${m}m:${s}s`;
+    }
 
     function calculate() {
         const distance = parseFloat(distanceInput.value);
@@ -25,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
             epResult.textContent = '-';
             ephResult.textContent = '-';
             paceResult.textContent = '-';
+            time10kResult.textContent = '-';
+            timeHalfResult.textContent = '-';
+            timeFullResult.textContent = '-';
             if ((distanceInput.value && distance <= 0) || (gainInput.value && gain < 0)) {
                 errorDisplay.textContent = 'Distance must be positive, and gain must not be negative.';
                 errorDisplay.classList.add('visible');
@@ -47,10 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const seconds = Math.floor(paceInSeconds % 60);
             paceMinutes.textContent = minutes.toString().padStart(2, '0');
             paceSeconds.textContent = seconds.toString().padStart(2, '0');
+
+            time10kResult.textContent = formatDuration(RACE_DISTANCES.tenK * paceInSeconds);
+            timeHalfResult.textContent = formatDuration(RACE_DISTANCES.half * paceInSeconds);
+            timeFullResult.textContent = formatDuration(RACE_DISTANCES.full * paceInSeconds);
         } else {
             ephResult.textContent = '-';
             paceMinutes.textContent = '-';
             paceSeconds.textContent = '-'; // Reset pace result if invalid
+            time10kResult.textContent = '-';
+            timeHalfResult.textContent = '-';
+            timeFullResult.textContent = '-';
         }
 
         if (window.parent) {
@@ -77,6 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const eph = ephResult.textContent;
         const paceMinutesText = paceMinutes.textContent;
         const paceSecondsText = paceSeconds.textContent;
+        const time10kText = time10kResult.textContent;
+        const timeHalfText = timeHalfResult.textContent;
+        const timeFullText = timeFullResult.textContent;
 
         if (ep === '-' || eph === '-' || paceMinutesText === '-' || paceSecondsText === '-') {
             return; // Don't copy if there are no valid results
@@ -87,7 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
 時間: ${hours}h:${minutes}m:${seconds}s
 EP: ${ep}
 EPH: ${eph}
-EPH to Pace: ${paceMinutesText}:${paceSecondsText} min/km`.trim(); // Format EPH to Pace
+EPH to Pace: ${paceMinutesText}:${paceSecondsText} min/km
+10K 預估時間: ${time10kText}
+半馬預估時間: ${timeHalfText}
+全馬預估時間: ${timeFullText}`.trim();
 
         navigator.clipboard.writeText(resultText)
             .then(() => {
